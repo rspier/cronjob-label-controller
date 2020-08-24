@@ -1,0 +1,6 @@
+# used during development
+Makefile
+.docker-image
+
+# the binary
+cronjob-label-controller

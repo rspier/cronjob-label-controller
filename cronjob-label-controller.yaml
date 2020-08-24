@@ -1,0 +1,63 @@
+# Copyright 2020 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    https://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cronjob-label-controller
+  # This doesn't have to be in kube-system, but it simplifies the
+  # CustomRoleBinding slightly.
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      app: cronjob-label-controller
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: cronjob-label-controller
+    spec:
+      containers:
+      - name: cronjob-label-controller
+        image: IMAGENAMEGOESHERE
+
+---
+
+# Define a ClusterRole that's allowed to modify cronjob resources.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: cronjob-modifier
+rules:
+- apiGroups: ["batch"]
+  resources: ["cronjobs"]
+  verbs: ["get", "watch", "list", "edit", "update"]
+
+---
+
+# Bind the cronjob-modifier ClusterRole to who can use it.
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cronjob-modifier-global
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: kube-system
+roleRef:
+  kind: ClusterRole
+  name: cronjob-modifier
+  apiGroup: rbac.authorization.k8s.io
