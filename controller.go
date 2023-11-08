@@ -21,13 +21,13 @@ import (
 	"context"
 	"fmt"
 
-	batchv1beta1 "k8s.io/api/batch/v1beta1"
+	batchv1 "k8s.io/api/batch/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-	batchinformers "k8s.io/client-go/informers/batch/v1beta1"
+	batchinformers "k8s.io/client-go/informers/batch/v1"
 
 	"k8s.io/client-go/kubernetes"
-	batchlisters "k8s.io/client-go/listers/batch/v1beta1"
+	batchlisters "k8s.io/client-go/listers/batch/v1"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 )
@@ -61,8 +61,8 @@ func NewController(kubeclientset kubernetes.Interface, cronjobInformer batchinfo
 	cronjobInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: controller.handleCronJob,
 		UpdateFunc: func(old, new interface{}) {
-			newDepl := new.(*batchv1beta1.CronJob)
-			oldDepl := old.(*batchv1beta1.CronJob)
+			newDepl := new.(*batchv1.CronJob)
+			oldDepl := old.(*batchv1.CronJob)
 			if newDepl.ResourceVersion == oldDepl.ResourceVersion {
 				// Periodic resync will send update events for all known CronJobs.
 				// Two different versions of the same CronJobs will always have different RVs.
@@ -106,12 +106,12 @@ func (c *Controller) addCronJobLabel(m *map[string]string, v string) bool {
 	return true
 }
 
-// handleCronjob resource implementing batchv1beta1.CronJob and update it to
+// handleCronjob resource implementing batchv1.CronJob and update it to
 // make sure that it has cronjob labels that match the name of the object.
 func (c *Controller) handleCronJob(object interface{}) {
-	var cj *batchv1beta1.CronJob
+	var cj *batchv1.CronJob
 	var ok bool
-	if cj, ok = object.(*batchv1beta1.CronJob); !ok {
+	if cj, ok = object.(*batchv1.CronJob); !ok {
 		klog.V(1).Infof("object can not be cast to a CronJob")
 		return
 	}
@@ -140,7 +140,7 @@ func (c *Controller) handleCronJob(object interface{}) {
 	// Only update the object on the server if we've changed a label.
 	if updated {
 		klog.Infof("adding cronjob label to %s/%s", cj.GetNamespace(), cj.GetName())
-		_, err := c.kubeclientset.BatchV1beta1().CronJobs(cj.GetNamespace()).Update(context.TODO(), cj, metav1.UpdateOptions{})
+		_, err := c.kubeclientset.BatchV1().CronJobs(cj.GetNamespace()).Update(context.TODO(), cj, metav1.UpdateOptions{})
 		if err != nil {
 			utilruntime.HandleError(fmt.Errorf("error updating CronJob %s/%s: %v", cj.GetNamespace(), cj.GetName(), err))
 			return

@@ -58,7 +58,7 @@ func main() {
 	kubeInformerFactory := kubeinformers.NewSharedInformerFactory(kubeClient, time.Second*30)
 
 	controller := NewController(kubeClient,
-		kubeInformerFactory.Batch().V1beta1().CronJobs(),
+		kubeInformerFactory.Batch().V1().CronJobs(),
 		*label,
 	)
 
